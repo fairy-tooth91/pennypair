@@ -1,0 +1,105 @@
+{
+  "app": {
+    "name": "PennyPair"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "transactions": "Transactions",
+    "settlement": "Settlement",
+    "settings": "Settings"
+  },
+  "auth": {
+    "login": "Log In",
+    "signup": "Sign Up",
+    "email": "Email",
+    "password": "Password",
+    "displayName": "Display Name",
+    "logout": "Log Out",
+    "noAccount": "Don't have an account?",
+    "hasAccount": "Already have an account?"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "income": "Income",
+    "expense": "Expense",
+    "net": "Net",
+    "categoryBreakdown": "Category Breakdown",
+    "monthlyTrend": "Monthly Trend",
+    "annualAnalysis": "Annual Analysis"
+  },
+  "transaction": {
+    "title": "Transactions",
+    "add": "Add Transaction",
+    "edit": "Edit Transaction",
+    "delete": "Delete",
+    "date": "Date",
+    "type": "Type",
+    "category": "Category",
+    "amount": "Amount",
+    "currency": "Currency",
+    "memo": "Memo",
+    "splitType": "Split Type",
+    "splitRatio": "Split Ratio",
+    "income": "Income",
+    "expense": "Expense",
+    "save": "Save",
+    "cancel": "Cancel",
+    "confirmDelete": "Delete this transaction?",
+    "noTransactions": "No transactions yet"
+  },
+  "split": {
+    "50_50": "50/50",
+    "custom": "Custom",
+    "paid_for_self": "Paid for Self",
+    "paid_for_partner": "Paid for Partner"
+  },
+  "settlement": {
+    "title": "Settlement",
+    "balance": "Current Balance",
+    "owes": "{{from}} owes {{to}}",
+    "settled": "All settled!",
+    "settle": "Settle Now",
+    "history": "Settlement History",
+    "period": "Period",
+    "amount": "Amount",
+    "noHistory": "No settlement history"
+  },
+  "settings": {
+    "title": "Settings",
+    "profile": "Profile",
+    "displayName": "Display Name",
+    "language": "Language",
+    "currency": "Home Currency",
+    "save": "Save",
+    "saved": "Saved!"
+  },
+  "profile": {
+    "editName": "Change Nickname",
+    "languageSetting": "Language",
+    "currencySetting": "Home Currency"
+  },
+  "category": {
+    "food": "Food",
+    "transport": "Transport",
+    "shopping": "Shopping",
+    "housing": "Housing",
+    "entertainment": "Entertainment",
+    "medical": "Medical",
+    "education": "Education",
+    "travel": "Travel",
+    "gift": "Gift",
+    "other_expense": "Other",
+    "salary": "Salary",
+    "side_income": "Side Income",
+    "investment_income": "Investment",
+    "other_income": "Other Income"
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "Something went wrong",
+    "retry": "Retry",
+    "confirm": "Confirm",
+    "cancel": "Cancel",
+    "close": "Close"
+  }
+}

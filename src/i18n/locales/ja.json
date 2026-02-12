@@ -1,0 +1,105 @@
+{
+  "app": {
+    "name": "PennyPair"
+  },
+  "nav": {
+    "dashboard": "ダッシュボード",
+    "transactions": "取引履歴",
+    "settlement": "精算",
+    "settings": "設定"
+  },
+  "auth": {
+    "login": "ログイン",
+    "signup": "新規登録",
+    "email": "メールアドレス",
+    "password": "パスワード",
+    "displayName": "表示名",
+    "logout": "ログアウト",
+    "noAccount": "アカウントをお持ちでないですか？",
+    "hasAccount": "すでにアカウントをお持ちですか？"
+  },
+  "dashboard": {
+    "title": "ダッシュボード",
+    "income": "収入",
+    "expense": "支出",
+    "net": "純利益",
+    "categoryBreakdown": "カテゴリ別支出",
+    "monthlyTrend": "月別推移",
+    "annualAnalysis": "年間分析"
+  },
+  "transaction": {
+    "title": "取引履歴",
+    "add": "取引追加",
+    "edit": "取引編集",
+    "delete": "削除",
+    "date": "日付",
+    "type": "種類",
+    "category": "カテゴリ",
+    "amount": "金額",
+    "currency": "通貨",
+    "memo": "メモ",
+    "splitType": "分担タイプ",
+    "splitRatio": "分担割合",
+    "income": "収入",
+    "expense": "支出",
+    "save": "保存",
+    "cancel": "キャンセル",
+    "confirmDelete": "この取引を削除しますか？",
+    "noTransactions": "取引履歴がありません"
+  },
+  "split": {
+    "50_50": "割り勘",
+    "custom": "カスタム",
+    "paid_for_self": "自分の支出",
+    "paid_for_partner": "相手の分を支払い"
+  },
+  "settlement": {
+    "title": "精算",
+    "balance": "現在の残高",
+    "owes": "{{from}}が{{to}}に支払う金額",
+    "settled": "精算完了！",
+    "settle": "精算する",
+    "history": "精算履歴",
+    "period": "期間",
+    "amount": "金額",
+    "noHistory": "精算履歴がありません"
+  },
+  "settings": {
+    "title": "設定",
+    "profile": "プロフィール",
+    "displayName": "表示名",
+    "language": "言語",
+    "currency": "基本通貨",
+    "save": "保存",
+    "saved": "保存しました！"
+  },
+  "profile": {
+    "editName": "ニックネーム変更",
+    "languageSetting": "言語",
+    "currencySetting": "基本通貨"
+  },
+  "category": {
+    "food": "食費",
+    "transport": "交通費",
+    "shopping": "ショッピング",
+    "housing": "住居費",
+    "entertainment": "娯楽",
+    "medical": "医療費",
+    "education": "教育費",
+    "travel": "旅行",
+    "gift": "プレゼント",
+    "other_expense": "その他の支出",
+    "salary": "給料",
+    "side_income": "副収入",
+    "investment_income": "投資収益",
+    "other_income": "その他の収入"
+  },
+  "common": {
+    "loading": "読み込み中...",
+    "error": "エラーが発生しました",
+    "retry": "再試行",
+    "confirm": "確認",
+    "cancel": "キャンセル",
+    "close": "閉じる"
+  }
+}

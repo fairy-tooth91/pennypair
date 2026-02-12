@@ -1,0 +1,105 @@
+{
+  "app": {
+    "name": "PennyPair"
+  },
+  "nav": {
+    "dashboard": "대시보드",
+    "transactions": "거래내역",
+    "settlement": "정산",
+    "settings": "설정"
+  },
+  "auth": {
+    "login": "로그인",
+    "signup": "회원가입",
+    "email": "이메일",
+    "password": "비밀번호",
+    "displayName": "표시 이름",
+    "logout": "로그아웃",
+    "noAccount": "계정이 없으신가요?",
+    "hasAccount": "이미 계정이 있으신가요?"
+  },
+  "dashboard": {
+    "title": "대시보드",
+    "income": "수입",
+    "expense": "지출",
+    "net": "순수익",
+    "categoryBreakdown": "카테고리별 지출",
+    "monthlyTrend": "월별 추이",
+    "annualAnalysis": "연간 분석"
+  },
+  "transaction": {
+    "title": "거래내역",
+    "add": "거래 추가",
+    "edit": "거래 수정",
+    "delete": "삭제",
+    "date": "날짜",
+    "type": "유형",
+    "category": "카테고리",
+    "amount": "금액",
+    "currency": "통화",
+    "memo": "메모",
+    "splitType": "분담 유형",
+    "splitRatio": "분담 비율",
+    "income": "수입",
+    "expense": "지출",
+    "save": "저장",
+    "cancel": "취소",
+    "confirmDelete": "이 거래를 삭제하시겠습니까?",
+    "noTransactions": "거래 내역이 없습니다"
+  },
+  "split": {
+    "50_50": "반반",
+    "custom": "커스텀",
+    "paid_for_self": "본인 지출",
+    "paid_for_partner": "상대방 대신 지출"
+  },
+  "settlement": {
+    "title": "정산",
+    "balance": "현재 잔액",
+    "owes": "{{from}}이(가) {{to}}에게 줄 금액",
+    "settled": "정산 완료!",
+    "settle": "정산하기",
+    "history": "정산 기록",
+    "period": "기간",
+    "amount": "금액",
+    "noHistory": "정산 기록이 없습니다"
+  },
+  "settings": {
+    "title": "설정",
+    "profile": "프로필",
+    "displayName": "표시 이름",
+    "language": "언어",
+    "currency": "기본 통화",
+    "save": "저장",
+    "saved": "저장되었습니다!"
+  },
+  "profile": {
+    "editName": "닉네임 변경",
+    "languageSetting": "언어",
+    "currencySetting": "기본 통화"
+  },
+  "category": {
+    "food": "식비",
+    "transport": "교통비",
+    "shopping": "쇼핑",
+    "housing": "주거비",
+    "entertainment": "오락",
+    "medical": "의료비",
+    "education": "교육비",
+    "travel": "여행",
+    "gift": "선물",
+    "other_expense": "기타 지출",
+    "salary": "급여",
+    "side_income": "부수입",
+    "investment_income": "투자 수익",
+    "other_income": "기타 수입"
+  },
+  "common": {
+    "loading": "로딩 중...",
+    "error": "오류가 발생했습니다",
+    "retry": "다시 시도",
+    "confirm": "확인",
+    "cancel": "취소",
+    "close": "닫기"
+  }
+}
