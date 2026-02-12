@@ -14,7 +14,7 @@ export default function Transactions() {
   const { t } = useTranslation();
   const { profile } = useAuth();
   const { selectedMonth, setSelectedMonth, loading } = useCouple();
-  const { transactions, addTransaction, removeTransaction } = useTransactions();
+  const { transactions, addTransaction, editTransaction, removeTransaction } = useTransactions();
   const lang = (profile?.preferredLanguage ?? 'en') as Language;
 
   const [showForm, setShowForm] = useState(false);
@@ -76,9 +76,14 @@ export default function Transactions() {
             splitType: editingTx.splitType,
             splitRatio: editingTx.splitRatio,
             memo: editingTx.memo,
+            paidBy: editingTx.paidBy,
           } : undefined}
           onSubmit={async input => {
-            await addTransaction(input);
+            if (editingTx) {
+              await editTransaction(editingTx.id, input);
+            } else {
+              await addTransaction(input);
+            }
             setShowForm(false);
           }}
           onCancel={() => setShowForm(false)}

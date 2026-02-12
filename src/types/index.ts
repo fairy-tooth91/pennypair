@@ -52,6 +52,7 @@ export interface Transaction {
   exchangeRate: number | null;
   splitType: SplitType;
   splitRatio: number;
+  splitAmount: number | null;
   memo: string;
   createdAt: string;
   updatedAt: string;
@@ -124,6 +125,7 @@ export interface TransactionRow {
   exchange_rate: number | null;
   split_type: SplitType;
   split_ratio: number;
+  split_amount: number | null;
   memo: string;
   created_at: string;
   updated_at: string;
@@ -163,6 +165,7 @@ export interface TransactionInput {
   currency: Currency;
   splitType: SplitType;
   splitRatio: number;
+  splitAmount: number | null;
   memo: string;
   paidBy: string;
 }

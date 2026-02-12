@@ -47,7 +47,9 @@
     "confirmDelete": "Delete this transaction?",
     "noTransactions": "No transactions yet",
     "paidBy": "Paid by",
-    "me": "Me"
+    "me": "Me",
+    "exchangeRate": "Exchange Rate",
+    "convertedAmount": "Converted"
   },
   "split": {
     "50_50": "50/50",

@@ -30,8 +30,19 @@ export default function TransactionForm({ onSubmit, onCancel, initial }: Transac
   const [currency, setCurrency] = useState<Currency>(initial?.currency ?? profile?.homeCurrency ?? 'KRW');
   const [splitType, setSplitType] = useState<SplitType>(initial?.splitType ?? '50_50');
   const [splitRatio, setSplitRatio] = useState(initial?.splitRatio?.toString() ?? '50');
+  const [customMode, setCustomMode] = useState<'percent' | 'amount'>(
+    initial?.splitAmount != null ? 'amount' : 'percent'
+  );
+  const [customAmount, setCustomAmount] = useState(() => {
+    if (initial?.splitAmount != null) return String(initial.splitAmount);
+    if (initial?.amount && initial?.splitRatio != null) {
+      return String(Math.round(initial.amount * initial.splitRatio / 100));
+    }
+    return '';
+  });
   const [memo, setMemo] = useState(initial?.memo ?? '');
   const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState('');
 
   const { rate } = useExchangeRate(currency, currency === 'KRW' ? 'JPY' : 'KRW', date);
 
@@ -42,8 +53,10 @@ export default function TransactionForm({ onSubmit, onCancel, initial }: Transac
     if (!amount || !categoryId) return;
 
     setSubmitting(true);
+    setError('');
     try {
       const paidById = paidBy === 'me' ? user!.id : partner!.id;
+      const isSplitByAmount = splitType === 'custom' && customMode === 'amount';
       await onSubmit({
         date,
         type,
@@ -52,9 +65,12 @@ export default function TransactionForm({ onSubmit, onCancel, initial }: Transac
         currency,
         splitType,
         splitRatio: Number(splitRatio),
+        splitAmount: isSplitByAmount ? Number(customAmount) : null,
         memo,
         paidBy: paidById,
       });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t('common.error'));
     } finally {
       setSubmitting(false);
     }
@@ -145,7 +161,16 @@ export default function TransactionForm({ onSubmit, onCancel, initial }: Transac
           <input
             type="number"
             value={amount}
-            onChange={e => setAmount(e.target.value)}
+            onChange={e => {
+              const val = e.target.value;
+              setAmount(val);
+              if (splitType === 'custom' && customMode === 'amount' && customAmount && Number(val) > 0) {
+                setSplitRatio(String(Math.round(Number(customAmount) / Number(val) * 100)));
+              }
+              if (splitType === 'custom' && customMode === 'percent' && splitRatio && val) {
+                setCustomAmount(String(Math.round(Number(val) * Number(splitRatio) / 100)));
+              }
+            }}
             placeholder="0"
             className="w-full rounded-lg border px-3 py-2"
             min="0"
@@ -195,16 +220,95 @@ export default function TransactionForm({ onSubmit, onCancel, initial }: Transac
             ))}
           </div>
           {splitType === 'custom' && (
-            <div className="mt-2">
-              <label className="text-xs text-gray-500">{t('transaction.splitRatio')} (%)</label>
-              <input
-                type="number"
-                value={splitRatio}
-                onChange={e => setSplitRatio(e.target.value)}
-                className="w-full rounded-lg border px-3 py-2"
-                min="0"
-                max="100"
-              />
+            <div className="mt-3 space-y-2">
+              {/* Mode toggle */}
+              <div className="flex gap-1 rounded-lg bg-gray-100 p-0.5">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCustomMode('percent');
+                    if (amount && customAmount) {
+                      setSplitRatio(String(Math.round(Number(customAmount) / Number(amount) * 100)));
+                    }
+                  }}
+                  className={`flex-1 rounded-md py-1 text-xs font-medium ${
+                    customMode === 'percent' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500'
+                  }`}
+                >
+                  %
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCustomMode('amount');
+                    if (amount && splitRatio) {
+                      setCustomAmount(String(Math.round(Number(amount) * Number(splitRatio) / 100)));
+                    }
+                  }}
+                  className={`flex-1 rounded-md py-1 text-xs font-medium ${
+                    customMode === 'amount' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500'
+                  }`}
+                >
+                  {t('transaction.amount')}
+                </button>
+              </div>
+
+              {/* Payer row */}
+              <div className="flex items-center gap-2">
+                <span className="w-24 truncate text-xs text-gray-600">
+                  {paidBy === 'me' ? profile?.displayName : partner?.displayName}
+                </span>
+                {customMode === 'percent' ? (
+                  <div className="flex flex-1 items-center gap-1">
+                    <input
+                      type="number"
+                      value={splitRatio}
+                      onChange={e => {
+                        setSplitRatio(e.target.value);
+                        if (amount && e.target.value) {
+                          setCustomAmount(String(Math.round(Number(amount) * Number(e.target.value) / 100)));
+                        }
+                      }}
+                      className="w-full rounded-lg border px-3 py-1.5 text-sm"
+                      min="0"
+                      max="100"
+                    />
+                    <span className="text-xs text-gray-400">%</span>
+                  </div>
+                ) : (
+                  <div className="flex flex-1 items-center gap-1">
+                    <input
+                      type="number"
+                      value={customAmount}
+                      onChange={e => {
+                        setCustomAmount(e.target.value);
+                        if (amount && Number(amount) > 0) {
+                          setSplitRatio(String(Math.round(Number(e.target.value) / Number(amount) * 100)));
+                        }
+                      }}
+                      className="w-full rounded-lg border px-3 py-1.5 text-sm"
+                      min="0"
+                    />
+                    <span className="text-xs text-gray-400">{currency}</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Other person row (read-only) */}
+              <div className="flex items-center gap-2">
+                <span className="w-24 truncate text-xs text-gray-600">
+                  {paidBy === 'me' ? partner?.displayName : profile?.displayName}
+                </span>
+                <div className="flex flex-1 items-center gap-1">
+                  <span className="w-full rounded-lg bg-gray-50 px-3 py-1.5 text-sm text-gray-500">
+                    {customMode === 'percent'
+                      ? (100 - Number(splitRatio || 0))
+                      : amount ? Math.round(Number(amount) - Number(customAmount || 0)) : 0
+                    }
+                  </span>
+                  <span className="text-xs text-gray-400">{customMode === 'percent' ? '%' : currency}</span>
+                </div>
+              </div>
             </div>
           )}
         </div>
@@ -221,6 +325,9 @@ export default function TransactionForm({ onSubmit, onCancel, initial }: Transac
           placeholder={t('transaction.memo')}
         />
       </div>
+
+      {/* Error */}
+      {error && <p className="text-sm text-red-600">{error}</p>}
 
       {/* Actions */}
       <div className="flex gap-2">

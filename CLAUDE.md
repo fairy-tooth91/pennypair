@@ -21,7 +21,7 @@
 | 다국어 | react-i18next + i18next-browser-languagedetector |
 | 환율 API | Frankfurter API (`api.frankfurter.dev`, 무료, 키 불필요) |
 | 인증/DB | Supabase (PostgreSQL + Auth) |
-| 배포 | GitHub Pages |
+| 배포 | Vercel (Hobby 플랜) |
 
 ## 폴더 구조
 
@@ -149,7 +149,7 @@ CREATE TYPE split_type AS ENUM ('50_50', 'custom', 'paid_for_self', 'paid_for_pa
 | profiles | 유저 프로필 (auth.users 확장) | display_name, home_currency, preferred_language |
 | couples | 커플 연결 | user1_id, user2_id |
 | categories | 거래 카테고리 | i18n_key, icon, type(ENUM) |
-| transactions | 거래 기록 (핵심) | amount/currency + converted_amount/converted_currency + exchange_rate + split_type |
+| transactions | 거래 기록 (핵심) | amount/currency + converted_amount/converted_currency + exchange_rate + split_type + split_amount |
 | settlements | 정산 기록 | settled_by, settled_to, amount, period |
 | exchange_rate_cache | 환율 캐시 | base_currency, target_currency, rate, rate_date |
 
@@ -172,6 +172,7 @@ interface Transaction {
   exchangeRate: number | null;       // 적용 환율
   splitType: '50_50' | 'custom' | 'paid_for_self' | 'paid_for_partner';
   splitRatio: number;                // 결제자 부담 비율 (기본 50)
+  splitAmount: number | null;        // 결제자 부담 금액 (금액 모드 입력 시, null이면 비율 모드)
   memo: string;
 }
 
@@ -214,8 +215,9 @@ npx gh-pages -d dist  # GitHub Pages 배포
 
 ## TODO
 
-- [ ] Phase 1: 문서 + DB 스키마
-- [ ] Phase 2: 인증 + i18n + 서비스 레이어
-- [ ] Phase 3: 거래 기록 + 대시보드
-- [ ] Phase 4: 정산 시스템
-- [ ] Phase 5: 설정 페이지 + 마무리
+- [x] Phase 1: 문서 + DB 스키마
+- [x] Phase 2: 인증 + i18n + 서비스 레이어
+- [x] Phase 3: 거래 기록 + 대시보드
+- [x] Phase 4: 정산 시스템 + 설정 페이지 + Vercel 배포
+- [x] Phase 5: 실동작 테스트 + 버그 수정 + 기능 개선 (split_amount 등)
+- [ ] Phase 6: 데스크톱 반응형 + 추가 기능

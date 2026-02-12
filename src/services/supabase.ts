@@ -66,6 +66,7 @@ export function toTransaction(row: TransactionRow): Transaction {
     exchangeRate: row.exchange_rate ? Number(row.exchange_rate) : null,
     splitType: row.split_type,
     splitRatio: Number(row.split_ratio),
+    splitAmount: row.split_amount != null ? Number(row.split_amount) : null,
     memo: row.memo,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -223,6 +224,7 @@ export async function createTransaction(
       exchange_rate: exchangeRate,
       split_type: input.splitType,
       split_ratio: input.splitRatio,
+      split_amount: input.splitAmount,
       memo: input.memo,
     })
     .select()
@@ -240,7 +242,9 @@ export async function updateTransaction(id: string, input: Partial<TransactionIn
   if (input.currency !== undefined) row.currency = input.currency;
   if (input.splitType !== undefined) row.split_type = input.splitType;
   if (input.splitRatio !== undefined) row.split_ratio = input.splitRatio;
+  if (input.splitAmount !== undefined) row.split_amount = input.splitAmount;
   if (input.memo !== undefined) row.memo = input.memo;
+  if (input.paidBy !== undefined) row.paid_by = input.paidBy;
 
   const { data, error } = await supabase
     .from('transactions')

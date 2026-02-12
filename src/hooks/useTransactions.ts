@@ -13,15 +13,18 @@ export function useTransactions() {
     if (!user || !couple || !profile || !partner) return;
 
     const paidBy = input.paidBy || user.id;
-    const partnerCurrency = partner.homeCurrency ?? profile.homeCurrency;
+    // 입력 통화와 다른 쪽 홈 통화로 변환
+    const myCurrency = profile.homeCurrency;
+    const theirCurrency = partner.homeCurrency;
+    const targetCurrency = input.currency === myCurrency ? theirCurrency : myCurrency;
     let convertedAmt: number | null = null;
     let convertedCur: Currency | null = null;
     let rate: number | null = null;
 
-    if (input.currency !== partnerCurrency) {
-      rate = await getExchangeRate(input.currency, partnerCurrency, input.date);
+    if (input.currency !== targetCurrency) {
+      rate = await getExchangeRate(input.currency, targetCurrency, input.date);
       convertedAmt = convertAmount(input.amount, rate);
-      convertedCur = partnerCurrency;
+      convertedCur = targetCurrency;
     }
 
     const newTx = await createTransaction(
