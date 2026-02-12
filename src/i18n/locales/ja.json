@@ -45,7 +45,9 @@
     "save": "保存",
     "cancel": "キャンセル",
     "confirmDelete": "この取引を削除しますか？",
-    "noTransactions": "取引履歴がありません"
+    "noTransactions": "取引履歴がありません",
+    "paidBy": "支払った人",
+    "me": "自分"
   },
   "split": {
     "50_50": "割り勘",

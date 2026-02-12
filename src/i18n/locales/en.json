@@ -45,7 +45,9 @@
     "save": "Save",
     "cancel": "Cancel",
     "confirmDelete": "Delete this transaction?",
-    "noTransactions": "No transactions yet"
+    "noTransactions": "No transactions yet",
+    "paidBy": "Paid by",
+    "me": "Me"
   },
   "split": {
     "50_50": "50/50",

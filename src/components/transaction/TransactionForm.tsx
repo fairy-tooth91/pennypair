@@ -7,6 +7,8 @@ import { useCouple } from '../../hooks/useCouple';
 import { useExchangeRate } from '../../hooks/useExchangeRate';
 import { toDateString } from '../../utils/format';
 
+type PaidByOption = 'me' | 'partner';
+
 interface TransactionFormProps {
   onSubmit: (input: TransactionInput) => Promise<void>;
   onCancel: () => void;
@@ -15,11 +17,14 @@ interface TransactionFormProps {
 
 export default function TransactionForm({ onSubmit, onCancel, initial }: TransactionFormProps) {
   const { t } = useTranslation();
-  const { profile } = useAuth();
-  const { categories } = useCouple();
+  const { user, profile } = useAuth();
+  const { partner, categories } = useCouple();
 
   const [date, setDate] = useState(initial?.date ?? toDateString(new Date()));
   const [type, setType] = useState<TransactionType>(initial?.type ?? 'expense');
+  const [paidBy, setPaidBy] = useState<PaidByOption>(
+    initial?.paidBy && initial.paidBy !== user?.id ? 'partner' : 'me'
+  );
   const [categoryId, setCategoryId] = useState(initial?.categoryId ?? '');
   const [amount, setAmount] = useState(initial?.amount?.toString() ?? '');
   const [currency, setCurrency] = useState<Currency>(initial?.currency ?? profile?.homeCurrency ?? 'KRW');
@@ -38,6 +43,7 @@ export default function TransactionForm({ onSubmit, onCancel, initial }: Transac
 
     setSubmitting(true);
     try {
+      const paidById = paidBy === 'me' ? user!.id : partner!.id;
       await onSubmit({
         date,
         type,
@@ -47,6 +53,7 @@ export default function TransactionForm({ onSubmit, onCancel, initial }: Transac
         splitType,
         splitRatio: Number(splitRatio),
         memo,
+        paidBy: paidById,
       });
     } finally {
       setSubmitting(false);
@@ -65,6 +72,33 @@ export default function TransactionForm({ onSubmit, onCancel, initial }: Transac
           className="w-full rounded-lg border px-3 py-2"
         />
       </div>
+
+      {/* Paid by toggle */}
+      {partner && (
+        <div>
+          <label className="mb-1 block text-sm font-medium text-gray-700">{t('transaction.paidBy')}</label>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => setPaidBy('me')}
+              className={`flex-1 rounded-lg py-2 text-sm font-medium ${
+                paidBy === 'me' ? 'bg-indigo-100 text-indigo-700 ring-2 ring-indigo-400' : 'bg-gray-100 text-gray-500'
+              }`}
+            >
+              {profile?.displayName} ({t('transaction.me')})
+            </button>
+            <button
+              type="button"
+              onClick={() => setPaidBy('partner')}
+              className={`flex-1 rounded-lg py-2 text-sm font-medium ${
+                paidBy === 'partner' ? 'bg-indigo-100 text-indigo-700 ring-2 ring-indigo-400' : 'bg-gray-100 text-gray-500'
+              }`}
+            >
+              {partner.displayName}
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Type toggle */}
       <div className="flex gap-2">

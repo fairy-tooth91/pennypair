@@ -164,6 +164,7 @@ export interface TransactionInput {
   splitType: SplitType;
   splitRatio: number;
   memo: string;
+  paidBy: string;
 }
 
 export interface SettlementInput {

@@ -6,8 +6,10 @@
 
 국제 커플(한국-일본)을 위한 공유 가계부 웹앱. 이중 통화 자동 변환, 커플 간 정산, 한/일/영 다국어 지원.
 
+- **배포 URL**: https://pennypair.vercel.app
 - **GitHub**: https://github.com/fairy-tooth91/pennypair
 - **Supabase**: `ibuyfrrxkgpkppkbauvl.supabase.co` (public 스키마)
+- **호스팅**: Vercel (Hobby 플랜, 무료)
 
 ## 기술 스택
 
@@ -198,8 +200,8 @@ interface Settlement {
 
 ## 브랜치 전략
 
-- `master`: 안정 버전
-- `gh-pages`: GitHub Pages 배포 (자동 생성)
+- `master`: 안정 버전 (배포용, develop에서 머지)
+- `develop`: 개발 작업 브랜치 (평소 작업은 여기서)
 
 ## 명령어
 

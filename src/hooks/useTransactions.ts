@@ -12,6 +12,7 @@ export function useTransactions() {
   const addTransaction = useCallback(async (input: TransactionInput) => {
     if (!user || !couple || !profile || !partner) return;
 
+    const paidBy = input.paidBy || user.id;
     const partnerCurrency = partner.homeCurrency ?? profile.homeCurrency;
     let convertedAmt: number | null = null;
     let convertedCur: Currency | null = null;
@@ -24,7 +25,7 @@ export function useTransactions() {
     }
 
     const newTx = await createTransaction(
-      couple.id, user.id, input,
+      couple.id, paidBy, input,
       convertedAmt, convertedCur, rate,
     );
 

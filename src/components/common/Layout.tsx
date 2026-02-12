@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../hooks/useAuth';
+import { useCouple } from '../../hooks/useCouple';
 import ProfileBottomSheet from './ProfileBottomSheet';
 
 const navItems = [
@@ -14,6 +15,7 @@ const navItems = [
 export default function Layout() {
   const { t } = useTranslation();
   const { profile } = useAuth();
+  const { partner } = useCouple();
   const [profileOpen, setProfileOpen] = useState(false);
 
   const initials = profile
@@ -30,7 +32,12 @@ export default function Layout() {
       {/* Header */}
       <header className="bg-white shadow-sm">
         <div className="mx-auto flex max-w-lg items-center justify-between px-4 py-3">
-          <h1 className="text-lg font-bold text-indigo-600">PennyPair</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-lg font-bold text-indigo-600">PennyPair</h1>
+            {partner && (
+              <span className="text-xs text-gray-400">with {partner.displayName}</span>
+            )}
+          </div>
           {profile && (
             <button
               onClick={() => setProfileOpen(true)}
