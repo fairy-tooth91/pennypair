@@ -1,38 +1,42 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useCouple } from '../hooks/useCouple';
-import { useAuth } from '../hooks/useAuth';
 import { useSettlements } from '../hooks/useSettlements';
-import { toDateString } from '../utils/format';
+import type { SettlementInput } from '../types';
 import BalanceSummary from '../components/settlement/BalanceSummary';
 import SettlementHistory from '../components/settlement/SettlementHistory';
+import SettlementForm from '../components/settlement/SettlementForm';
+import PendingSettlement from '../components/settlement/PendingSettlement';
+import Modal from '../components/common/Modal';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 
 export default function Settlement() {
   const { t } = useTranslation();
-  const { profile } = useAuth();
   const { transactions, loading: coupleLoading } = useCouple();
-  const { settlements, loading: settlementLoading, addSettlement } = useSettlements();
-  const [settling, setSettling] = useState(false);
+  const {
+    settlements,
+    confirmedItems,
+    pendingForMe,
+    loading: settlementLoading,
+    addSettlement,
+    confirmSettlement,
+    cancelSettlement,
+  } = useSettlements();
+  const [showForm, setShowForm] = useState(false);
 
-  async function handleSettle() {
-    if (!profile) return;
-    setSettling(true);
-    try {
-      const today = toDateString(new Date());
-      const lastSettlement = settlements[0];
-      const periodStart = lastSettlement ? lastSettlement.periodEnd : '2024-01-01';
+  async function handleSubmit(input: SettlementInput) {
+    await addSettlement(input);
+    setShowForm(false);
+  }
 
-      await addSettlement({
-        amount: 0, // Placeholder - actual balance will be calculated
-        currency: profile.homeCurrency,
-        periodStart,
-        periodEnd: today,
-        memo: '',
-      });
-    } finally {
-      setSettling(false);
-    }
+  async function handleConfirm(id: string) {
+    if (!confirm(t('settlement.confirmNotice', { amount: '' }))) return;
+    await confirmSettlement(id);
+  }
+
+  async function handleCancel(id: string) {
+    if (!confirm(t('settlement.cancelConfirm'))) return;
+    await cancelSettlement(id);
   }
 
   if (coupleLoading || settlementLoading) return <LoadingSpinner />;
@@ -41,17 +45,46 @@ export default function Settlement() {
     <div className="space-y-4">
       <h2 className="text-lg font-bold">{t('settlement.title')}</h2>
 
+      {/* 대기 중 정산 알림 (상대방이 요청한 것) */}
+      {pendingForMe.map(s => (
+        <PendingSettlement
+          key={s.id}
+          settlement={s}
+          onConfirm={() => handleConfirm(s.id)}
+          onReject={() => handleCancel(s.id)}
+        />
+      ))}
+
+      {/* 잔액 요약 */}
       <BalanceSummary transactions={transactions} />
 
+      {/* 정산 요청 버튼 */}
       <button
-        onClick={handleSettle}
-        disabled={settling}
-        className="w-full rounded-xl bg-indigo-600 py-3 text-sm font-medium text-white disabled:opacity-50"
+        onClick={() => setShowForm(true)}
+        className="w-full rounded-xl bg-indigo-600 py-3 text-sm font-medium text-white"
       >
-        {settling ? t('common.loading') : t('settlement.settle')}
+        {t('settlement.newSettlement')}
       </button>
 
-      <SettlementHistory settlements={settlements} />
+      {/* 정산 요청 모달 */}
+      <Modal
+        open={showForm}
+        onClose={() => setShowForm(false)}
+        title={t('settlement.newSettlement')}
+      >
+        <SettlementForm
+          confirmedItems={confirmedItems}
+          onSubmit={handleSubmit}
+          onCancel={() => setShowForm(false)}
+        />
+      </Modal>
+
+      {/* 정산 기록 */}
+      <SettlementHistory
+        settlements={settlements}
+        onConfirm={handleConfirm}
+        onCancel={handleCancel}
+      />
     </div>
   );
 }

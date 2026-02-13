@@ -43,8 +43,10 @@ src/
 │   │   ├── MonthlyTrendChart.tsx # 월별 트렌드 라인차트
 │   │   └── AnnualAnalysis.tsx   # 연간 지출 분석
 │   └── settlement/
-│       ├── BalanceSummary.tsx   # 커플 간 잔액 표시
-│       └── SettlementHistory.tsx # 정산 히스토리
+│       ├── BalanceSummary.tsx    # 커플 간 미정산 잔액 표시
+│       ├── SettlementHistory.tsx # 정산 이력 (상태 뱃지 + 액션)
+│       ├── SettlementForm.tsx   # 정산 요청 폼 (월 정산 / 건당 정산 탭)
+│       └── PendingSettlement.tsx # 대기 중 정산 확인 카드
 ├── context/
 │   ├── AuthContext.tsx          # Supabase Auth 상태 관리
 │   └── CoupleContext.tsx        # 커플 데이터 + 거래내역 관리
@@ -52,7 +54,7 @@ src/
 │   ├── useAuth.ts              # AuthContext 소비 훅
 │   ├── useCouple.ts            # CoupleContext 소비 훅
 │   ├── useTransactions.ts      # 거래 CRUD + Optimistic UI
-│   ├── useSettlements.ts       # 정산 계산 + CRUD
+│   ├── useSettlements.ts       # 정산 상태관리 + CRUD + 상호확인
 │   └── useExchangeRate.ts      # 환율 조회 + 캐싱
 ├── i18n/
 │   ├── index.ts                # i18next 초기화
@@ -73,17 +75,18 @@ src/
 │   └── index.ts                # TypeScript 인터페이스 + 상수
 └── utils/
     ├── format.ts               # 통화/날짜 포맷 (locale별 Intl 사용)
-    └── settlement.ts           # 정산 계산 로직
+    └── settlement.ts           # 정산 잔액 계산 + 미정산 거래 필터 (순수 함수)
 
 db/
-└── init/                       # DB 스키마 SQL (실행 순서: 01→07)
+└── init/                       # DB 스키마 SQL (실행 순서: 01→08)
     ├── 01.profiles.sql         # profiles 테이블 + auth 트리거
     ├── 02.couples.sql          # couples 테이블 + RLS
     ├── 03.categories.sql       # categories + 시드 데이터 14개
     ├── 04.transactions.sql     # transactions (이중 통화 + 정산)
-    ├── 05.settlements.sql      # settlements 테이블
+    ├── 05.settlements.sql      # settlements + settlement_items 테이블
     ├── 06.exchange_rate_cache.sql
-    └── 07.functions.sql        # get_partner_id, get_couple_id
+    ├── 07.functions.sql        # get_partner_id, get_couple_id
+    └── 08.settlement_overhaul.sql  # 정산 시스템 마이그레이션 (기존 DB용)
 ```
 
 ## 코딩 컨벤션
@@ -131,6 +134,14 @@ db/
 ### RLS (Row Level Security)
 - 모든 테이블에 RLS 적용
 - 커플 데이터: `couple_id IN (SELECT id FROM couples WHERE user1_id = auth.uid() OR user2_id = auth.uid())`
+- settlement_items: settlements JOIN을 통해 커플 멤버 확인
+
+### 정산 시스템 (레이어별)
+- **DB**: settlements + settlement_items 2개 테이블. ENUM으로 type/status 제한. RLS로 커플 단위 접근 제어.
+- **서비스 레이어** (`services/supabase.ts`): 정산 CRUD + confirm/cancel. 비즈니스 검증(누가 confirm 가능한지)은 여기서 처리.
+- **비즈니스 로직** (`utils/settlement.ts`): `calculateBalance()` — confirmed settlement_items만 잔액에 반영. 순수 함수, DB 의존 없음.
+- **상태관리** (`hooks/useSettlements.ts`): settlements + confirmedItems 로딩. pendingForMe/pendingByMe 파생.
+- **UI**: SettlementForm(월/건당 탭), PendingSettlement(확인 카드), SettlementHistory(이력+상태뱃지)
 
 ## DB 스키마
 
@@ -140,9 +151,11 @@ CREATE TYPE currency_code AS ENUM ('KRW', 'JPY', 'USD');
 CREATE TYPE language_code AS ENUM ('ko', 'ja', 'en');
 CREATE TYPE transaction_type AS ENUM ('income', 'expense');
 CREATE TYPE split_type AS ENUM ('50_50', 'custom', 'paid_for_self', 'paid_for_partner');
+CREATE TYPE settlement_type AS ENUM ('monthly', 'per_transaction');
+CREATE TYPE settlement_status AS ENUM ('pending', 'confirmed', 'cancelled');
 ```
 
-### 테이블 요약 (6개)
+### 테이블 요약 (7개)
 
 | 테이블 | 역할 | 핵심 컬럼 |
 |--------|------|-----------|
@@ -150,7 +163,8 @@ CREATE TYPE split_type AS ENUM ('50_50', 'custom', 'paid_for_self', 'paid_for_pa
 | couples | 커플 연결 | user1_id, user2_id |
 | categories | 거래 카테고리 | i18n_key, icon, type(ENUM) |
 | transactions | 거래 기록 (핵심) | amount/currency + converted_amount/converted_currency + exchange_rate + split_type + split_amount |
-| settlements | 정산 기록 | settled_by, settled_to, amount, period |
+| settlements | 정산 이벤트 | type, status, requested_by, requested_to, total_amount, period, confirmed_at, cancelled_at/by |
+| settlement_items | 정산 상세 (거래별) | settlement_id FK, transaction_id FK, amount, currency |
 | exchange_rate_cache | 환율 캐시 | base_currency, target_currency, rate, rate_date |
 
 ### 주요 타입
@@ -185,17 +199,34 @@ interface Profile {
   avatarUrl: string | null;
 }
 
+type SettlementType = 'monthly' | 'per_transaction';
+type SettlementStatus = 'pending' | 'confirmed' | 'cancelled';
+
 interface Settlement {
   id: string;
   coupleId: string;
-  settledBy: string;
-  settledTo: string;
-  amount: number;
+  type: SettlementType;
+  status: SettlementStatus;
+  requestedBy: string;                // 요청자 UUID
+  requestedTo: string;                // 확인 대상 UUID
+  totalAmount: number;
   currency: Currency;
   periodStart: string;
   periodEnd: string;
   memo: string;
   settledAt: string;
+  confirmedAt: string | null;         // 상대방 확인 시점
+  cancelledAt: string | null;         // 취소 시점
+  cancelledBy: string | null;         // 취소한 사람 UUID
+}
+
+interface SettlementItem {
+  id: string;
+  settlementId: string;
+  transactionId: string;
+  amount: number;                     // 거래 원본 통화 기준 정산 금액
+  currency: Currency;
+  createdAt: string;
 }
 ```
 
@@ -220,4 +251,5 @@ npx gh-pages -d dist  # GitHub Pages 배포
 - [x] Phase 3: 거래 기록 + 대시보드
 - [x] Phase 4: 정산 시스템 + 설정 페이지 + Vercel 배포
 - [x] Phase 5: 실동작 테스트 + 버그 수정 + 기능 개선 (split_amount 등)
-- [ ] Phase 6: 데스크톱 반응형 + 추가 기능
+- [x] Phase 6: 정산 시스템 전면 개편 (월 정산 + 건당 정산 + 상호 확인 + 취소/수정)
+- [ ] Phase 7: 데스크톱 반응형 + UI 보완 + 추가 기능

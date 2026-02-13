@@ -195,22 +195,136 @@ transaction: {
 
 ---
 
-## 7. 정산 로직
+## 7. 정산 시스템
 
-### split_type별 계산
+### 7.1 레이어 구분
 
-| split_type | 설명 | 결제자 부담 | 상대방 부담 |
-|-----------|------|-----------|-----------|
-| `50_50` | 반반 | 50% | 50% |
-| `custom` | 커스텀 비율 | split_ratio% | (100 - split_ratio)% |
-| `paid_for_self` | 본인 지출 | 100% | 0% |
-| `paid_for_partner` | 상대방 대신 지출 | 0% | 100% |
-
-**잔액 계산 예시:**
 ```
-fairytooth가 ₩100,000 결제 (50:50) → maki가 ₩50,000 빚짐
-maki가 ¥10,000 결제 (50:50) → fairytooth가 ¥5,000 빚짐
-→ 환율 적용해서 통합 잔액 계산
+┌─────────────────────────────────────────────────┐
+│  Frontend (UI)                                   │
+│  pages/Settlement.tsx                            │
+│  components/settlement/*                         │
+│  → 정산 요청 폼, 대기 확인 카드, 이력 목록          │
+├─────────────────────────────────────────────────┤
+│  Frontend (비즈니스 로직)                          │
+│  utils/settlement.ts                             │
+│  → calculateBalance(), getUnsettledTransactions() │
+│  → 순수 함수, DB 의존 없음                         │
+├─────────────────────────────────────────────────┤
+│  서비스 레이어 (Backend 인터페이스)                  │
+│  services/supabase.ts                            │
+│  → Settlement/SettlementItem CRUD                │
+│  → 나중에 별도 API 서버로 교체 가능한 경계           │
+├─────────────────────────────────────────────────┤
+│  Database (Backend)                              │
+│  settlements + settlement_items 테이블            │
+│  → ENUM, RLS, 인덱스                              │
+└─────────────────────────────────────────────────┘
 ```
 
-모든 금액은 조회하는 유저의 `home_currency`로 통합 변환 후 잔액 산출.
+### 7.2 정산 모드
+
+| 모드 | 설명 | 내부 구조 |
+|------|------|-----------|
+| **월 정산** | 특정 월의 미정산 거래 전부 일괄 정산 | 1 settlement + N settlement_items |
+| **건당 정산** | 개별 거래 선택, 일부 금액도 가능 | 1 settlement + N settlement_items |
+
+월 정산은 건당 정산의 묶음과 동일한 내부 구조. 코드 재사용.
+
+### 7.3 상태 흐름 (상호 확인)
+
+```
+요청자: [정산 요청] → status: 'pending'
+                          │
+           ┌──────────────┼──────────────┐
+           │              │              │
+      요청자 수정      상대방 확인     요청자/상대방 취소
+      (pending 유지)   (confirmed)    (cancelled)
+           │              │              │
+       pending          잔액 반영      잔액 변동 없음
+```
+
+- **pending**: 정산 요청됨. 잔액에 영향 없음.
+- **confirmed**: 상대방 확인 완료. **이 상태만 잔액 계산에 반영.**
+- **cancelled**: 취소됨. 이력만 조회 가능 (soft delete).
+
+### 7.4 데이터 모델
+
+```
+settlements (정산 이벤트)
+├── id, couple_id
+├── type: settlement_type ENUM ('monthly', 'per_transaction')
+├── status: settlement_status ENUM ('pending', 'confirmed', 'cancelled')
+├── requested_by UUID (요청자)
+├── requested_to UUID (확인 대상)
+├── total_amount NUMERIC, currency
+├── period_start DATE, period_end DATE
+├── memo, settled_at
+├── confirmed_at, cancelled_at, cancelled_by
+│
+└── settlement_items (정산 상세 - 거래별)
+    ├── id, settlement_id FK
+    ├── transaction_id FK
+    ├── amount NUMERIC (거래 원본 통화 기준 정산 금액)
+    └── currency currency_code
+```
+
+### 7.5 split_type별 상대방 몫 계산 (비즈니스 로직)
+
+| split_type | 설명 | 상대방 몫 (otherShare) |
+|-----------|------|----------------------|
+| `50_50` | 반반 | `amount * 0.5` |
+| `custom` (비율) | 커스텀 % | `amount * (1 - splitRatio / 100)` |
+| `custom` (금액) | 커스텀 금액 | `amount * (1 - splitAmount / amount)` |
+| `paid_for_self` | 본인 지출 | `0` (정산 불필요) |
+| `paid_for_partner` | 상대방 대신 | `amount` (전액) |
+
+- `splitAmount`가 non-null → 금액 모드 (정확한 금액 기반)
+- `splitAmount`가 null → 비율 모드 (`splitRatio` 기반)
+
+### 7.6 잔액 계산 알고리즘 (비즈니스 로직)
+
+**파일**: `utils/settlement.ts` → `calculateBalance()`
+
+```
+입력: transactions[], confirmedItems[], userId, partnerId, displayCurrency
+출력: { amount, currency, oweFrom, oweTo }
+
+1. confirmedItems를 transactionId 기준 Map으로 집계
+   Map<transactionId, 기정산 합계(원본 통화)>
+
+2. 각 expense 거래에 대해:
+   a. 거래 금액을 displayCurrency로 변환 (기존 로직)
+   b. otherShare 계산 (split_type에 따라)
+   c. 기정산 금액을 displayCurrency로 변환 (거래의 원본→표시 비율 사용)
+   d. remaining = otherShare - settledInDisplay
+   e. 내가 결제 → balance += remaining
+      상대가 결제 → balance -= remaining
+
+3. 결과: |balance|가 최종 잔액, 부호로 방향 결정
+```
+
+**핵심**: 정산 금액은 거래 시점의 환율 데이터를 재사용. 새 환율 조회 없음.
+
+### 7.7 일부 금액 정산 예시
+
+```
+거래: woonyong이 ₩100,000 결제, 반반 → maki 몫 ₩50,000
+
+1차 정산: settlement_item { tx_id, amount: 30000, currency: KRW }
+  → 잔여: ₩50,000 - ₩30,000 = ₩20,000
+
+2차 정산: settlement_item { tx_id, amount: 20000, currency: KRW }
+  → 잔여: ₩50,000 - (₩30,000 + ₩20,000) = ₩0 (완료)
+```
+
+### 7.8 정산 통화 처리
+
+정산 시 새 환율을 조회하지 않음. 거래 저장 시점의 `amount`, `convertedAmount`, `exchangeRate`를 그대로 사용.
+
+```
+woonyong 시점: "maki가 ₩25,000 줘야 함" (거래의 KRW 금액 기반)
+maki 시점:     "내가 ¥2,750 줘야 함" (거래의 convertedAmount 기반)
+```
+
+settlement_items.amount는 거래 원본 통화 기준. 표시할 때 기존 변환 데이터 재사용.

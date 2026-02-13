@@ -6,6 +6,8 @@ export type Currency = 'KRW' | 'JPY' | 'USD';
 export type Language = 'ko' | 'ja' | 'en';
 export type TransactionType = 'income' | 'expense';
 export type SplitType = '50_50' | 'custom' | 'paid_for_self' | 'paid_for_partner';
+export type SettlementType = 'monthly' | 'per_transaction';
+export type SettlementStatus = 'pending' | 'confirmed' | 'cancelled';
 
 // ============================================
 // DB 엔티티 (camelCase)
@@ -61,14 +63,28 @@ export interface Transaction {
 export interface Settlement {
   id: string;
   coupleId: string;
-  settledBy: string;
-  settledTo: string;
-  amount: number;
+  type: SettlementType;
+  status: SettlementStatus;
+  requestedBy: string;
+  requestedTo: string;
+  totalAmount: number;
   currency: Currency;
   periodStart: string;
   periodEnd: string;
   memo: string;
   settledAt: string;
+  confirmedAt: string | null;
+  cancelledAt: string | null;
+  cancelledBy: string | null;
+}
+
+export interface SettlementItem {
+  id: string;
+  settlementId: string;
+  transactionId: string;
+  amount: number;
+  currency: Currency;
+  createdAt: string;
 }
 
 export interface ExchangeRateCache {
@@ -134,14 +150,28 @@ export interface TransactionRow {
 export interface SettlementRow {
   id: string;
   couple_id: string;
-  settled_by: string;
-  settled_to: string;
-  amount: number;
+  type: SettlementType;
+  status: SettlementStatus;
+  requested_by: string;
+  requested_to: string;
+  total_amount: number;
   currency: Currency;
   period_start: string;
   period_end: string;
   memo: string;
   settled_at: string;
+  confirmed_at: string | null;
+  cancelled_at: string | null;
+  cancelled_by: string | null;
+}
+
+export interface SettlementItemRow {
+  id: string;
+  settlement_id: string;
+  transaction_id: string;
+  amount: number;
+  currency: Currency;
+  created_at: string;
 }
 
 export interface ExchangeRateCacheRow {
@@ -171,11 +201,19 @@ export interface TransactionInput {
 }
 
 export interface SettlementInput {
-  amount: number;
+  type: SettlementType;
+  totalAmount: number;
   currency: Currency;
   periodStart: string;
   periodEnd: string;
   memo: string;
+  items: SettlementItemInput[];
+}
+
+export interface SettlementItemInput {
+  transactionId: string;
+  amount: number;
+  currency: Currency;
 }
 
 // ============================================

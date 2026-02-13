@@ -66,7 +66,32 @@
     "history": "정산 기록",
     "period": "기간",
     "amount": "금액",
-    "noHistory": "정산 기록이 없습니다"
+    "noHistory": "정산 기록이 없습니다",
+    "newSettlement": "정산 요청",
+    "monthly": "월별 정산",
+    "perTransaction": "건별 정산",
+    "selectMonth": "월 선택",
+    "unsettledTransactions": "미정산 거래",
+    "totalAmount": "합계",
+    "requestSettlement": "정산 요청하기",
+    "noUnsettled": "미정산 거래가 없습니다",
+    "partialAmount": "일부 금액",
+    "remainingAmount": "잔여 금액",
+    "status": {
+      "pending": "대기 중",
+      "confirmed": "확인됨",
+      "cancelled": "취소됨"
+    },
+    "actions": {
+      "confirm": "확인",
+      "reject": "거절",
+      "cancel": "정산 취소"
+    },
+    "pendingNotice": "{{name}}님이 정산을 요청했습니다",
+    "waitingForPartner": "상대방 확인 대기 중",
+    "cancelConfirm": "이 정산을 취소하시겠습니까?",
+    "confirmNotice": "{{amount}} 정산을 확인하시겠습니까?",
+    "settledOf": "{{total}} 중 {{settled}} 정산됨"
   },
   "settings": {
     "title": "설정",

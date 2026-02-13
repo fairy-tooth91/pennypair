@@ -66,7 +66,32 @@
     "history": "Settlement History",
     "period": "Period",
     "amount": "Amount",
-    "noHistory": "No settlement history"
+    "noHistory": "No settlement history",
+    "newSettlement": "New Settlement",
+    "monthly": "Monthly",
+    "perTransaction": "Per Transaction",
+    "selectMonth": "Select Month",
+    "unsettledTransactions": "Unsettled Transactions",
+    "totalAmount": "Total",
+    "requestSettlement": "Request Settlement",
+    "noUnsettled": "No unsettled transactions",
+    "partialAmount": "Partial",
+    "remainingAmount": "Remaining",
+    "status": {
+      "pending": "Pending",
+      "confirmed": "Confirmed",
+      "cancelled": "Cancelled"
+    },
+    "actions": {
+      "confirm": "Confirm",
+      "reject": "Reject",
+      "cancel": "Cancel Settlement"
+    },
+    "pendingNotice": "{{name}} requested a settlement",
+    "waitingForPartner": "Waiting for confirmation",
+    "cancelConfirm": "Cancel this settlement?",
+    "confirmNotice": "Confirm this settlement of {{amount}}?",
+    "settledOf": "Settled {{settled}} of {{total}}"
   },
   "settings": {
     "title": "Settings",

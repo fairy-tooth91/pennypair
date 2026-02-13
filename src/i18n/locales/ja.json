@@ -66,7 +66,32 @@
     "history": "精算履歴",
     "period": "期間",
     "amount": "金額",
-    "noHistory": "精算履歴がありません"
+    "noHistory": "精算履歴がありません",
+    "newSettlement": "精算リクエスト",
+    "monthly": "月別精算",
+    "perTransaction": "取引別精算",
+    "selectMonth": "月を選択",
+    "unsettledTransactions": "未精算の取引",
+    "totalAmount": "合計",
+    "requestSettlement": "精算をリクエスト",
+    "noUnsettled": "未精算の取引がありません",
+    "partialAmount": "一部金額",
+    "remainingAmount": "残額",
+    "status": {
+      "pending": "保留中",
+      "confirmed": "確認済み",
+      "cancelled": "キャンセル"
+    },
+    "actions": {
+      "confirm": "確認",
+      "reject": "拒否",
+      "cancel": "精算をキャンセル"
+    },
+    "pendingNotice": "{{name}}さんが精算をリクエストしました",
+    "waitingForPartner": "相手の確認を待っています",
+    "cancelConfirm": "この精算をキャンセルしますか？",
+    "confirmNotice": "{{amount}}の精算を確認しますか？",
+    "settledOf": "{{total}}のうち{{settled}}精算済み"
   },
   "settings": {
     "title": "設定",

@@ -5,6 +5,7 @@ import type {
   Category, CategoryRow,
   Transaction, TransactionRow, TransactionInput,
   Settlement, SettlementRow, SettlementInput,
+  SettlementItem, SettlementItemRow,
   ExchangeRateCache, ExchangeRateCacheRow,
   Currency,
 } from '../types';
@@ -77,14 +78,30 @@ export function toSettlement(row: SettlementRow): Settlement {
   return {
     id: row.id,
     coupleId: row.couple_id,
-    settledBy: row.settled_by,
-    settledTo: row.settled_to,
-    amount: Number(row.amount),
+    type: row.type,
+    status: row.status,
+    requestedBy: row.requested_by,
+    requestedTo: row.requested_to,
+    totalAmount: Number(row.total_amount),
     currency: row.currency,
     periodStart: row.period_start,
     periodEnd: row.period_end,
     memo: row.memo,
     settledAt: row.settled_at,
+    confirmedAt: row.confirmed_at,
+    cancelledAt: row.cancelled_at,
+    cancelledBy: row.cancelled_by,
+  };
+}
+
+export function toSettlementItem(row: SettlementItemRow): SettlementItem {
+  return {
+    id: row.id,
+    settlementId: row.settlement_id,
+    transactionId: row.transaction_id,
+    amount: Number(row.amount),
+    currency: row.currency,
+    createdAt: row.created_at,
   };
 }
 
@@ -275,24 +292,100 @@ export async function fetchSettlements(coupleId: string): Promise<Settlement[]> 
   return (data as SettlementRow[]).map(toSettlement);
 }
 
+export async function fetchConfirmedItems(coupleId: string): Promise<SettlementItem[]> {
+  // 1단계: confirmed 상태의 settlement ID 목록 조회
+  const { data: settlements, error: sError } = await supabase
+    .from('settlements')
+    .select('id')
+    .eq('couple_id', coupleId)
+    .eq('status', 'confirmed');
+  if (sError) throw sError;
+  if (!settlements || settlements.length === 0) return [];
+
+  // 2단계: 해당 settlement들의 items 조회
+  const ids = settlements.map(s => s.id);
+  const { data, error } = await supabase
+    .from('settlement_items')
+    .select('*')
+    .in('settlement_id', ids);
+  if (error) throw error;
+  return (data as SettlementItemRow[]).map(toSettlementItem);
+}
+
+export async function fetchItemsBySettlement(settlementId: string): Promise<SettlementItem[]> {
+  const { data, error } = await supabase
+    .from('settlement_items')
+    .select('*')
+    .eq('settlement_id', settlementId);
+  if (error) throw error;
+  return (data as SettlementItemRow[]).map(toSettlementItem);
+}
+
 export async function createSettlement(
   coupleId: string,
-  settledBy: string,
-  settledTo: string,
+  requestedBy: string,
+  requestedTo: string,
   input: SettlementInput,
-): Promise<Settlement> {
-  const { data, error } = await supabase
+): Promise<{ settlement: Settlement; items: SettlementItem[] }> {
+  // 1. settlement INSERT
+  const { data: sData, error: sError } = await supabase
     .from('settlements')
     .insert({
       couple_id: coupleId,
-      settled_by: settledBy,
-      settled_to: settledTo,
-      amount: input.amount,
+      type: input.type,
+      status: 'pending',
+      requested_by: requestedBy,
+      requested_to: requestedTo,
+      total_amount: input.totalAmount,
       currency: input.currency,
       period_start: input.periodStart,
       period_end: input.periodEnd,
       memo: input.memo,
     })
+    .select()
+    .single();
+  if (sError) throw sError;
+
+  const settlement = toSettlement(sData as SettlementRow);
+
+  // 2. settlement_items INSERT
+  const itemRows = input.items.map(item => ({
+    settlement_id: settlement.id,
+    transaction_id: item.transactionId,
+    amount: item.amount,
+    currency: item.currency,
+  }));
+
+  const { data: iData, error: iError } = await supabase
+    .from('settlement_items')
+    .insert(itemRows)
+    .select();
+  if (iError) throw iError;
+
+  const items = (iData as SettlementItemRow[]).map(toSettlementItem);
+  return { settlement, items };
+}
+
+export async function confirmSettlement(id: string): Promise<Settlement> {
+  const { data, error } = await supabase
+    .from('settlements')
+    .update({ status: 'confirmed', confirmed_at: new Date().toISOString() })
+    .eq('id', id)
+    .select()
+    .single();
+  if (error) throw error;
+  return toSettlement(data as SettlementRow);
+}
+
+export async function cancelSettlement(id: string, cancelledBy: string): Promise<Settlement> {
+  const { data, error } = await supabase
+    .from('settlements')
+    .update({
+      status: 'cancelled',
+      cancelled_at: new Date().toISOString(),
+      cancelled_by: cancelledBy,
+    })
+    .eq('id', id)
     .select()
     .single();
   if (error) throw error;

@@ -151,9 +151,9 @@ COMMENT ON COLUMN public.transactions.split_amount IS '결제자 부담 금액 (
 
 ---
 
-### 6. 미완료 / 다음 단계
+### 6. 완료 / 다음 단계
 
-- [ ] **DB 마이그레이션 실행**: `ALTER TABLE ... ADD COLUMN split_amount` (Supabase SQL Editor)
-- [ ] **develop → master 머지 후 배포**
+- [x] **DB 마이그레이션 실행**: Supabase SQL Editor에서 `ALTER TABLE ... ADD COLUMN split_amount` 실행 완료
+- [x] **develop → master 머지 후 배포**: 커밋 `9ef1fc9` → master 머지 → Vercel 자동 배포 완료
 - [ ] **실동작 테스트**: split_amount 저장/조회/정산 계산 검증
 - [ ] **기존 커스텀 거래 데이터**: split_amount = NULL 상태 → 비율 기반으로 정상 동작 확인

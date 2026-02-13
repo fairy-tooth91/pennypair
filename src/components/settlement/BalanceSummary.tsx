@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import type { Transaction, Language } from '../../types';
 import { useAuth } from '../../hooks/useAuth';
 import { useCouple } from '../../hooks/useCouple';
+import { useSettlements } from '../../hooks/useSettlements';
 import { calculateBalance } from '../../utils/settlement';
 import { formatCurrency } from '../../utils/format';
 
@@ -14,13 +15,14 @@ export default function BalanceSummary({ transactions }: BalanceSummaryProps) {
   const { t } = useTranslation();
   const { user, profile } = useAuth();
   const { partner } = useCouple();
+  const { confirmedItems } = useSettlements();
   const currency = profile?.homeCurrency ?? 'KRW';
   const lang = (profile?.preferredLanguage ?? 'en') as Language;
 
   const balance = useMemo(() => {
     if (!user || !partner) return null;
-    return calculateBalance(transactions, user.id, partner.id, currency);
-  }, [transactions, user, partner, currency]);
+    return calculateBalance(transactions, confirmedItems, user.id, partner.id, currency);
+  }, [transactions, confirmedItems, user, partner, currency]);
 
   if (!balance || !partner || !profile) return null;
 
