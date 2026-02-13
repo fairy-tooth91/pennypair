@@ -27,6 +27,7 @@ export function toProfile(row: ProfileRow): Profile {
     homeCurrency: row.home_currency,
     preferredLanguage: row.preferred_language,
     avatarUrl: row.avatar_url,
+    birthday: row.birthday,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -37,6 +38,7 @@ export function toCouple(row: CoupleRow): Couple {
     id: row.id,
     user1Id: row.user1_id,
     user2Id: row.user2_id,
+    anniversaryDate: row.anniversary_date,
     createdAt: row.created_at,
   };
 }
@@ -150,12 +152,13 @@ export async function fetchProfile(userId: string): Promise<Profile | null> {
   return toProfile(data as ProfileRow);
 }
 
-export async function updateProfile(userId: string, updates: Partial<Pick<Profile, 'displayName' | 'homeCurrency' | 'preferredLanguage' | 'avatarUrl'>>) {
+export async function updateProfile(userId: string, updates: Partial<Pick<Profile, 'displayName' | 'homeCurrency' | 'preferredLanguage' | 'avatarUrl' | 'birthday'>>) {
   const row: Record<string, unknown> = {};
   if (updates.displayName !== undefined) row.display_name = updates.displayName;
   if (updates.homeCurrency !== undefined) row.home_currency = updates.homeCurrency;
   if (updates.preferredLanguage !== undefined) row.preferred_language = updates.preferredLanguage;
   if (updates.avatarUrl !== undefined) row.avatar_url = updates.avatarUrl;
+  if (updates.birthday !== undefined) row.birthday = updates.birthday;
 
   const { data, error } = await supabase
     .from('profiles')
@@ -178,6 +181,17 @@ export async function fetchCouple(userId: string): Promise<Couple | null> {
     .or(`user1_id.eq.${userId},user2_id.eq.${userId}`)
     .single();
   if (error || !data) return null;
+  return toCouple(data as CoupleRow);
+}
+
+export async function updateCoupleAnniversary(coupleId: string, date: string | null): Promise<Couple> {
+  const { data, error } = await supabase
+    .from('couples')
+    .update({ anniversary_date: date })
+    .eq('id', coupleId)
+    .select()
+    .single();
+  if (error) throw error;
   return toCouple(data as CoupleRow);
 }
 

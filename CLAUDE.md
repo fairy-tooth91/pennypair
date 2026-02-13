@@ -41,7 +41,9 @@ src/
 │   │   ├── SummaryCards.tsx     # 월별 수입/지출/순수익 카드
 │   │   ├── CategoryPieChart.tsx # 카테고리별 지출 파이차트
 │   │   ├── MonthlyTrendChart.tsx # 월별 트렌드 라인차트
-│   │   └── AnnualAnalysis.tsx   # 연간 지출 분석
+│   │   ├── AnnualAnalysis.tsx   # 연간 지출 분석
+│   │   ├── AnniversaryCard.tsx  # D+N 카운터 + 마일스톤 카운트다운
+│   │   └── CelebrationModal.tsx # 기념일/생일 축하 전체화면 오버레이
 │   └── settlement/
 │       ├── BalanceSummary.tsx    # 커플 간 미정산 잔액 표시
 │       ├── SettlementHistory.tsx # 정산 이력 (상태 뱃지 + 액션)
@@ -75,7 +77,8 @@ src/
 │   └── index.ts                # TypeScript 인터페이스 + 상수
 └── utils/
     ├── format.ts               # 통화/날짜 포맷 (locale별 Intl 사용)
-    └── settlement.ts           # 정산 잔액 계산 + 미정산 거래 필터 (순수 함수)
+    ├── settlement.ts           # 정산 잔액 계산 + 미정산 거래 필터 (순수 함수)
+    └── milestone.ts            # 기념일/생일 마일스톤 계산 (순수 함수)
 
 db/
 └── init/                       # DB 스키마 SQL (실행 순서: 01→08)
@@ -86,7 +89,8 @@ db/
     ├── 05.settlements.sql      # settlements + settlement_items 테이블
     ├── 06.exchange_rate_cache.sql
     ├── 07.functions.sql        # get_partner_id, get_couple_id
-    └── 08.settlement_overhaul.sql  # 정산 시스템 마이그레이션 (기존 DB용)
+    ├── 08.settlement_overhaul.sql  # 정산 시스템 마이그레이션 (기존 DB용)
+    └── 09.anniversary.sql     # 기념일/생일 컬럼 추가 마이그레이션
 ```
 
 ## 코딩 컨벤션
@@ -136,6 +140,12 @@ db/
 - 커플 데이터: `couple_id IN (SELECT id FROM couples WHERE user1_id = auth.uid() OR user2_id = auth.uid())`
 - settlement_items: settlements JOIN을 통해 커플 멤버 확인
 
+### 기념일/생일 마일스톤 시스템
+- **DB**: couples.anniversary_date + profiles.birthday (DATE 컬럼). 별도 milestones 테이블 없음.
+- **비즈니스 로직** (`utils/milestone.ts`): 기념일에서 마일스톤 계산 (100일, 200일, 1주년 등). 순수 함수, DB 의존 없음.
+- **UI**: AnniversaryCard(D+N 카운터 + 카운트다운), CelebrationModal(축하 전체화면 오버레이 + CSS 파티클)
+- **축하 중복 방지**: localStorage에 확인한 마일스톤 기록
+
 ### 정산 시스템 (레이어별)
 - **DB**: settlements + settlement_items 2개 테이블. ENUM으로 type/status 제한. RLS로 커플 단위 접근 제어.
 - **서비스 레이어** (`services/supabase.ts`): 정산 CRUD + confirm/cancel. 비즈니스 검증(누가 confirm 가능한지)은 여기서 처리.
@@ -159,8 +169,8 @@ CREATE TYPE settlement_status AS ENUM ('pending', 'confirmed', 'cancelled');
 
 | 테이블 | 역할 | 핵심 컬럼 |
 |--------|------|-----------|
-| profiles | 유저 프로필 (auth.users 확장) | display_name, home_currency, preferred_language |
-| couples | 커플 연결 | user1_id, user2_id |
+| profiles | 유저 프로필 (auth.users 확장) | display_name, home_currency, preferred_language, birthday |
+| couples | 커플 연결 | user1_id, user2_id, anniversary_date |
 | categories | 거래 카테고리 | i18n_key, icon, type(ENUM) |
 | transactions | 거래 기록 (핵심) | amount/currency + converted_amount/converted_currency + exchange_rate + split_type + split_amount |
 | settlements | 정산 이벤트 | type, status, requested_by, requested_to, total_amount, period, confirmed_at, cancelled_at/by |
@@ -197,6 +207,7 @@ interface Profile {
   homeCurrency: Currency;
   preferredLanguage: Language;
   avatarUrl: string | null;
+  birthday: string | null;          // YYYY-MM-DD
 }
 
 type SettlementType = 'monthly' | 'per_transaction';
@@ -252,4 +263,4 @@ npx gh-pages -d dist  # GitHub Pages 배포
 - [x] Phase 4: 정산 시스템 + 설정 페이지 + Vercel 배포
 - [x] Phase 5: 실동작 테스트 + 버그 수정 + 기능 개선 (split_amount 등)
 - [x] Phase 6: 정산 시스템 전면 개편 (월 정산 + 건당 정산 + 상호 확인 + 취소/수정)
-- [ ] Phase 7: 데스크톱 반응형 + UI 보완 + 추가 기능
+- [ ] Phase 7: 기념일/생일 마일스톤 + UI 보완 + 추가 기능

@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../hooks/useAuth';
 import { useCouple } from '../../hooks/useCouple';
+import { getDaysSince } from '../../utils/milestone';
 import ProfileBottomSheet from './ProfileBottomSheet';
 
 const navItems = [
@@ -15,8 +16,13 @@ const navItems = [
 export default function Layout() {
   const { t } = useTranslation();
   const { profile } = useAuth();
-  const { partner } = useCouple();
+  const { couple, partner } = useCouple();
   const [profileOpen, setProfileOpen] = useState(false);
+
+  const daysSince = useMemo(
+    () => couple?.anniversaryDate ? getDaysSince(couple.anniversaryDate) : null,
+    [couple?.anniversaryDate],
+  );
 
   const initials = profile
     ? profile.displayName
@@ -36,6 +42,11 @@ export default function Layout() {
             <h1 className="text-lg font-bold text-indigo-600">PennyPair</h1>
             {partner && (
               <span className="text-xs text-gray-400">with {partner.displayName}</span>
+            )}
+            {daysSince !== null && (
+              <span className="rounded-full bg-pink-50 px-2 py-0.5 text-xs font-semibold text-pink-500">
+                ❤️ D+{daysSince.toLocaleString()}
+              </span>
             )}
           </div>
           {profile && (

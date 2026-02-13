@@ -19,9 +19,11 @@
 - woonyong (KRW, ko): `f55bd938-d5a4-44cf-bb8b-df6226d2a0b2`
 - maki (JPY, ja): `0441e872-1c5b-4486-b88e-8e997a4d55de`
 
-**미완료 작업 (Phase 7):**
-1. 데스크톱 반응형 레이아웃 대응
-2. UI 보완 + 추가 기능
+**현재 진행 (Phase 7): 기념일/생일 마일스톤 기능**
+- 사귀기 시작한 날 (couples.anniversary_date) + 각자 생일 (profiles.birthday)
+- D+N 카운터 + 마일스톤 카운트다운 (100일, 200일, 1주년 등)
+- 마일스톤 당일 축하 연출 (CelebrationModal + CSS 파티클)
+- 대시보드 AnniversaryCard + Settings 입력
 
 ---
 

@@ -1,6 +1,6 @@
 import { createContext, useState, useEffect, useCallback, type ReactNode } from 'react';
 import type { Couple, Profile, Category, Transaction } from '../types';
-import { fetchCouple, fetchProfile, fetchCategories, fetchTransactions } from '../services/supabase';
+import { fetchCouple, fetchProfile, fetchCategories, fetchTransactions, updateCoupleAnniversary as updateCoupleAnniversaryApi } from '../services/supabase';
 import { useAuth } from '../hooks/useAuth';
 import { getCurrentMonth } from '../utils/format';
 
@@ -17,6 +17,7 @@ interface CoupleContextValue extends CoupleState {
   setSelectedMonth: (month: string) => void;
   refreshTransactions: () => Promise<void>;
   setTransactions: React.Dispatch<React.SetStateAction<Transaction[]>>;
+  updateCoupleAnniversary: (date: string | null) => Promise<void>;
 }
 
 export const CoupleContext = createContext<CoupleContextValue | null>(null);
@@ -95,8 +96,14 @@ export function CoupleProvider({ children }: { children: ReactNode }) {
     }));
   };
 
+  const updateCoupleAnniversary = useCallback(async (date: string | null) => {
+    if (!state.couple) return;
+    const updated = await updateCoupleAnniversaryApi(state.couple.id, date);
+    setState(prev => ({ ...prev, couple: updated }));
+  }, [state.couple]);
+
   return (
-    <CoupleContext.Provider value={{ ...state, setSelectedMonth, refreshTransactions, setTransactions }}>
+    <CoupleContext.Provider value={{ ...state, setSelectedMonth, refreshTransactions, setTransactions, updateCoupleAnniversary }}>
       {children}
     </CoupleContext.Provider>
   );

@@ -20,6 +20,7 @@ export interface Profile {
   homeCurrency: Currency;
   preferredLanguage: Language;
   avatarUrl: string | null;
+  birthday: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -28,6 +29,7 @@ export interface Couple {
   id: string;
   user1Id: string;
   user2Id: string;
+  anniversaryDate: string | null;
   createdAt: string;
 }
 
@@ -97,6 +99,21 @@ export interface ExchangeRateCache {
 }
 
 // ============================================
+// 마일스톤 (계산 기반, DB 저장 아님)
+// ============================================
+
+export type CelebrationKind = 'anniversary_days' | 'anniversary_years' | 'birthday';
+
+export interface Milestone {
+  kind: CelebrationKind;
+  label: string;
+  value: number;
+  date: string;
+  daysFromNow: number;
+  targetName?: string;
+}
+
+// ============================================
 // DB row 타입 (snake_case) - Supabase 응답용
 // ============================================
 
@@ -107,6 +124,7 @@ export interface ProfileRow {
   home_currency: Currency;
   preferred_language: Language;
   avatar_url: string | null;
+  birthday: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -115,6 +133,7 @@ export interface CoupleRow {
   id: string;
   user1_id: string;
   user2_id: string;
+  anniversary_date: string | null;
   created_at: string;
 }
 
